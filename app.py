@@ -41,7 +41,7 @@ for column in columns_to_extract_tags_from:
 def rating_based_recommendation():
     try:
         # Calculate average ratings
-        average_ratings = train_food_data.groupby(['id','name', 'reviews_count', 'category', 'image'])['rating'].mean().reset_index()
+        average_ratings = train_food_data.groupby(['id','name','regularPrice','discount', 'reviews_count', 'category', 'image'])['rating'].mean().reset_index()
 
         # Sort items by rating in descending order
         top_rated_items = average_ratings.sort_values(by='rating', ascending=False)
@@ -129,7 +129,7 @@ def user_content_based_recommendations():
         ][:top_n]
 
         # Get the details of the recommended foods
-        recommended_items = train_food_data.iloc[recommended_indices][['id','name', 'category', 'description', 'rating', 'image']].to_dict(orient='records')
+        recommended_items = train_food_data.iloc[recommended_indices][['id','name','regularPrice','discount', 'category', 'description', 'rating', 'image']].to_dict(orient='records')
 
         return jsonify(recommended_items)
     except Exception as e:
