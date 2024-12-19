@@ -1,13 +1,9 @@
 import os
 import pandas as pd
-# import spacy
-
-import re
-from nltk.corpus import stopwords
-import nltk
+import spacy
 
 from flask import Flask, request, jsonify
-# from spacy.lang.en.stop_words import STOP_WORDS
+from spacy.lang.en.stop_words import STOP_WORDS
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from supabase import create_client
@@ -18,10 +14,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# nlp = spacy.load("en_core_web_sm")
-
-nltk.download('stopwords')
-STOP_WORDS = set(stopwords.words('english'))
+nlp = spacy.load("en_core_web_sm")
 
 url = 'https://iizqqbdczorzypgneais.supabase.co'
 key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpenFxYmRjem9yenlwZ25lYWlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjYzNzM0MDMsImV4cCI6MjA0MTk0OTQwM30.9oRoFnOjJapMUTPI19Q6UP1_XQvRm-TyL7u57Q_2x6s'
@@ -31,18 +24,10 @@ supabase = create_client(url,key)
 food_data = supabase.table('foods').select('*').execute()
 train_food_data = pd.DataFrame(food_data.data)
 
-# def clean_and_extract_tags(text):
-#     doc = nlp(text.lower())
-#     tags = [token.text for token in doc if token.text.isalnum() and token.text not in STOP_WORDS]
-#     return ', '.join(tags)
-
 def clean_and_extract_tags(text):
-    # Convert to lowercase and split into words
-    words = text.lower().split()
-    # Remove stopwords and non-alphanumeric characters
-    words = [re.sub(r'[^a-zA-Z0-9]', '', word) for word in words]
-    words = [word for word in words if word and word not in STOP_WORDS]
-    return ', '.join(words)
+    doc = nlp(text.lower())
+    tags = [token.text for token in doc if token.text.isalnum() and token.text not in STOP_WORDS]
+    return ', '.join(tags)
 
 columns_to_extract_tags_from = ['category', 'name', 'description']
 
