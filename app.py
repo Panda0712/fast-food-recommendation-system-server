@@ -3,6 +3,7 @@ import pandas as pd
 import spacy
 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from spacy.lang.en.stop_words import STOP_WORDS
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -13,6 +14,7 @@ load_dotenv()
 
 
 app = Flask(__name__)
+CORS(app)  # Cho phép mọi nguồn gửi yêu cầu
 
 nlp = spacy.load("en_core_web_sm")
 
