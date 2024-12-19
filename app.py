@@ -1,23 +1,17 @@
-from flask import Flask, request, jsonify
+import os
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import spacy
-from spacy.lang.en.stop_words import STOP_WORDS
 
+from flask import Flask, request, jsonify
+from spacy.lang.en.stop_words import STOP_WORDS
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
-
-import os
 from scipy.sparse import coo_matrix
-
+from supabase import create_client
 from dotenv import load_dotenv
+
 load_dotenv()
 
-import pandas as pd
-import os
-from supabase import create_client
 
 app = Flask(__name__)
 
@@ -40,51 +34,6 @@ columns_to_extract_tags_from = ['category', 'name', 'description']
 
 for column in columns_to_extract_tags_from:
     train_food_data[column] = train_food_data[column].apply(clean_and_extract_tags)
-
-average_ratings = train_food_data.groupby(['name','reviews_count','category','image'])['rating'].mean().reset_index()
-
-top_rated_items = average_ratings.sort_values(by='rating', ascending=False)
-
-rating_based_recommendation = top_rated_items.head(10)
-
-tfidf_vectorizer = TfidfVectorizer(stop_words='english')
-tfidf_matrix_content = tfidf_vectorizer.fit_transform(train_food_data['description'])
-cosine_similarities_content = cosine_similarity(tfidf_matrix_content,tfidf_matrix_content)
-
-def content_based_recommendations(train_data, item_name, top_n=10):
-    # Check if the item name exists in the training data
-    if item_name not in train_data['name'].values:
-        print(f"Item '{item_name}' not found in the training data.")
-        return pd.DataFrame()
-
-    # Create a TF-IDF vectorizer for item descriptions
-    tfidf_vectorizer = TfidfVectorizer(stop_words='english')
-
-    # Apply TF-IDF vectorization to item descriptions
-    tfidf_matrix_content = tfidf_vectorizer.fit_transform(train_data['description'])
-
-    # Calculate cosine similarity between items based on descriptions
-    cosine_similarities_content = cosine_similarity(tfidf_matrix_content, tfidf_matrix_content)
-
-    # Find the index of the item
-    item_index = train_data[train_data['name'] == item_name].index[0]
-
-    # Get the cosine similarity scores for the item
-    similar_items = list(enumerate(cosine_similarities_content[item_index]))
-
-    # Sort similar items by similarity score in descending order
-    similar_items = sorted(similar_items, key=lambda x: x[1], reverse=True)
-
-    # Get the top N most similar items (excluding the item itself)
-    top_similar_items = similar_items[1:top_n+1]
-
-    # Get the indices of the top similar items
-    recommended_item_indices = [x[0] for x in top_similar_items]
-
-    # Get the details of the top similar items
-    recommended_items_details = train_data.iloc[recommended_item_indices][['name', 'reviews_count', 'category', 'image', 'rating']]
-
-    return recommended_items_details
 
 # Rating-based recommendation function
 @app.route('/api/rating-based', methods=['POST'])
@@ -130,7 +79,7 @@ def content_based_recommendations():
         recommended_item_indices = [x[0] for x in top_similar_items]
 
         # Return recommendations
-        recommended_items = train_food_data.iloc[recommended_item_indices][['name', 'reviews_count', 'category', 'image', 'rating']].to_dict(orient='records')
+        recommended_items = train_food_data.iloc[recommended_item_indices][['id','name', 'reviews_count', 'category', 'image', 'rating']].to_dict(orient='records')
         return jsonify(recommended_items)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -179,7 +128,7 @@ def user_content_based_recommendations():
         ][:top_n]
 
         # Get the details of the recommended foods
-        recommended_items = train_food_data.iloc[recommended_indices][['name', 'category', 'description', 'rating', 'image']].to_dict(orient='records')
+        recommended_items = train_food_data.iloc[recommended_indices][['id','name', 'category', 'description', 'rating', 'image']].to_dict(orient='records')
 
         return jsonify(recommended_items)
     except Exception as e:
