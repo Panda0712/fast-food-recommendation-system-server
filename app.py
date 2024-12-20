@@ -80,7 +80,7 @@ def content_based_recommendations():
         recommended_item_indices = [x[0] for x in top_similar_items]
 
         # Return recommendations
-        recommended_items = train_food_data.iloc[recommended_item_indices][['id','regularPrice','discount','name', 'reviews_count', 'category', 'image', 'rating']].to_dict(orient='records')
+        recommended_items = train_food_data.iloc[recommended_item_indices][['id','regularPrice','description','discount','name', 'reviews_count', 'category', 'image', 'rating']].to_dict(orient='records')
         return jsonify(recommended_items)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
